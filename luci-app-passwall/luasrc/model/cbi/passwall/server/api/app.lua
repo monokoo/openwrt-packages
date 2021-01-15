@@ -32,9 +32,13 @@ end
 
 local function gen_include()
     cmd(string.format("echo '#!/bin/sh' > /var/etc/%s.include", CONFIG))
-    local function extract_rules(a)
+    local function extract_rules(n, a)
+        local _ipt = "iptables"
+        if n == "6" then
+            _ipt = "ip6tables"
+        end
         local result = "*" .. a
-        result = result .. "\n" .. sys.exec('iptables-save -t ' .. a .. ' | grep "PSW-SERVER" | sed -e "s/^-A \\(INPUT\\)/-I \\1 1/"')
+        result = result .. "\n" .. sys.exec(_ipt .. '-save -t ' .. a .. ' | grep "PSW-SERVER" | sed -e "s/^-A \\(INPUT\\)/-I \\1 1/"')
         result = result .. "COMMIT"
         return result
     end
@@ -42,7 +46,11 @@ local function gen_include()
     if f and err == nil then
         f:write('iptables-save -c | grep -v "PSW-SERVER" | iptables-restore -c' .. "\n")
         f:write('iptables-restore -n <<-EOT' .. "\n")
-        f:write(extract_rules("filter") .. "\n")
+        f:write(extract_rules("4", "filter") .. "\n")
+        f:write("EOT" .. "\n")
+        f:write('ip6tables-save -c | grep -v "PSW-SERVER" | ip6tables-restore -c' .. "\n")
+        f:write('ip6tables-restore -n <<-EOT' .. "\n")
+        f:write(extract_rules("6", "filter") .. "\n")
         f:write("EOT" .. "\n")
         f:close()
     end
@@ -57,6 +65,8 @@ local function start()
     cmd(string.format("touch %s", LOG_APP_FILE))
     cmd("iptables -N PSW-SERVER")
     cmd("iptables -I INPUT -j PSW-SERVER")
+    cmd("ip6tables -N PSW-SERVER")
+    cmd("ip6tables -I INPUT -j PSW-SERVER")
     ucic:foreach(CONFIG, "user", function(user)
         local id = user[".name"]
         local enable = user.enable
@@ -126,8 +136,10 @@ local function start()
             local bind_local = user.bind_local or 0
             if bind_local and tonumber(bind_local) ~= 1 then
                 cmd(string.format('iptables -A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                cmd(string.format('ip6tables -A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                 if udp_forward == 1 then
                     cmd(string.format('iptables -A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+                    cmd(string.format('ip6tables -A PSW-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
                 end 
             end
         end
@@ -140,6 +152,9 @@ local function stop()
     cmd("iptables -D INPUT -j PSW-SERVER 2>/dev/null")
     cmd("iptables -F PSW-SERVER 2>/dev/null")
     cmd("iptables -X PSW-SERVER 2>/dev/null")
+    cmd("ip6tables -D INPUT -j PSW-SERVER 2>/dev/null")
+    cmd("ip6tables -F PSW-SERVER 2>/dev/null")
+    cmd("ip6tables -X PSW-SERVER 2>/dev/null")
     cmd(string.format("rm -rf %s %s /var/etc/%s.include", CONFIG_PATH, LOG_APP_FILE, CONFIG))
 end
 

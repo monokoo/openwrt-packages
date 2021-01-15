@@ -6,9 +6,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=3.9
-PKG_RELEASE:=76
-PKG_DATE:=20201129
+PKG_VERSION:=4
+PKG_RELEASE:=7
+PKG_DATE:=20210111
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -71,11 +71,11 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_https_dns_proxy
 	bool "Include Https DNS Proxy(DoH)"
-	default y
+	default n
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_dns2socks
 	bool "Include dns2socks"
-	default n
+	default y
 	
 config PACKAGE_$(PKG_NAME)_INCLUDE_v2ray-plugin
 	bool "Include v2ray-plugin (Shadowsocks plugin)"
@@ -132,16 +132,10 @@ endef
 define Package/$(PKG_NAME)/conffiles
 /etc/config/passwall
 /etc/config/passwall_server
-/usr/share/passwall/rules/proxy_host
-/usr/share/passwall/rules/proxy_ip
-/usr/share/passwall/rules/proxy_host2
-/usr/share/passwall/rules/proxy_ip2
-/usr/share/passwall/rules/proxy_host3
-/usr/share/passwall/rules/proxy_ip3
-/usr/share/passwall/rules/black_host
-/usr/share/passwall/rules/black_ip
 /usr/share/passwall/rules/direct_host
 /usr/share/passwall/rules/direct_ip
+/usr/share/passwall/rules/proxy_host
+/usr/share/passwall/rules/proxy_ip
 endef
 
 define Package/$(PKG_NAME)/install
