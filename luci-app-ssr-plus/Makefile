@@ -1,3 +1,4 @@
+include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ssr-plus
 PKG_VERSION:=183
